@@ -1,9 +1,9 @@
 const args = require("minimist")(process.argv.slice(2));
 const { resolve } = require("path");
 const { build } = require("esbuild");
-
+console.log(args)
 // yarn dev: node ./scripts/dev reactivity --format=global
-const target = args._[0] || "reactivity";
+const target = args._[0] || "runtime-dom";
 const format = args.format || "global";
 
 const pkg = require(resolve(__dirname, `../packages/${target}/package.json`));

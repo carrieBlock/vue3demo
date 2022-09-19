@@ -17,7 +17,7 @@ export function h(type, propsOrChildren, children) {
         }
     } else {
         if (length > 3) {
-            // 拿出children参数
+            // 获取children参数
             children = Array.prototype.slice.call(arguments, 2)
         } else if (length === 3 && isVnode(children)) {
             children = [children]

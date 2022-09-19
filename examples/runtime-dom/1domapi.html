@@ -10,35 +10,19 @@
 
 <body>
   <div id="app"></div>
-  <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script src="../../packages/runtime-dom/dist/runtime-dom.global.js"></script>
   <script>
     /*
-      h方法是用来创建虚拟节点的
-      render方法是用来将虚拟节点挂载到指定元素上的
-      createRenderer 是用来交给用户自定义渲染的
+      h创建虚拟节点的
+      render将虚拟节点挂载到指定元素上的
+      createRenderer 用户自定义渲染的 -----需要传入所有方法
     */
-    const { render, h, createRenderer } = VueRuntimeDOM
-
-    const { render: userRender } = createRenderer({
-      createElement (type) {
-        console.log(type, '@@')
-        return document.createElement(type)
-      },
-      setElementText (element, text) {
-        console.log(element, text)
-        element.textContent = text
-      },
-      // insert (element, container, anchor) {
-      //   // console.log(element, container, anchor, '@@')
-      //   // container.appendChild(element) 
-      //   container.insertBefore(element, anchor) // insertBefore中的anchor 如果不存在，等价于 appendChild,
-      // }
-    })
+    const { render, h } = VueRuntimeDOM
 
     const vnode = h('div', 'helloworld')
 
-    // console.log(vnode)
-    userRender(vnode, app)
+    console.log(vnode)
+    // userRender(vnode, app)
     // render(vnode, app)
   </script>
 </body>
