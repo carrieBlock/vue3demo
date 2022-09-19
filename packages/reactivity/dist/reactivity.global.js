@@ -35,6 +35,7 @@ var VueReactivity = (() => {
   // packages/shared/src/index.ts
   var isObject = (val) => typeof val === "object" && val !== null;
   var isFunction = (val) => typeof val === "function";
+  var isArray = Array.isArray;
 
   // packages/reactivity/src/effect.ts
   var activeEffect;
