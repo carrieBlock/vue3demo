@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="btn">
+        <p>
+            <span>
+                <i>
+                    <h1 id="h1">123123</h1>
+                </i>
+            </span>
+        </p>
+    </div>
+    <script>
+        const fn1 = () => console.log('fn1')
+        const fn2 = () => console.log('fn2')
+        function createInvoker(newHandler) {
+            const fn = (event) => {
+                fn.value(event)
+            }
+            fn.value = newHandler
+            return fn
+        }
+
+        function patchEvent(target, key, oldHandler, newHandler) {
+            const invokers = target.vei || (target.vei = {})
+            const event = invokers[key]
+            console.log('target.vei', target.vei)
+            console.log('invokers', invokers)
+            console.log('event', event)
+            if (event && newHandler) {
+                event.value = newHandler
+            } else {
+                if (!event) {
+                    // 新增
+                    const handler = invokers[key] = createInvoker(newHandler)
+                    console.log('handler', handler)
+                    target.addEventListener(key.slice(2).toLowerCase(), handler)
+                } else if (!newHandler) {
+                    // 卸载
+                    target.removeEventListener(key.slice(2).toLowerCase(), event)
+                }
+            }
+        }
+
+        // 新增事件
+        patchEvent(btn, 'onClick', null, fn1)
+
+        setTimeout(() => {
+            // 更新事件
+            patchEvent(btn, 'onClick', fn1, fn2)
+            // setTimeout(() => {
+            //     patchEvent(btn, 'onClick', fn2, null)
+            // }, 2000)
+        }, 2000)
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <button id="btn">更新</button>
+    <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+    <script>
+        const { reactive, effect, ref, toRef, unRef, toRefs, customRef } = VueReactivity
+        const state1 = ref(1)
+
+        effect(() => {
+            // app.innerHTML = state1.value
+            app.innerHTML = unRef(state1)
+        })
+
+        setTimeout(() => {
+            console.log(state1.value)
+            state1.value++
+        }, 1000)
+    </script>
+</body>
+
+</html>

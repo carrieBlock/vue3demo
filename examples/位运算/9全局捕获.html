@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">
+        <div id="btn1">
+            <div id="btn2">
+                <div id="btn3">123123</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.body.errorHandler = (error) => console.log('全局错误')
+        const errorHook1 = (err) => {
+            console.log('errorHook1')
+        }
+        const errorHook2 = (err) => console.log('errorHook2')
+        const errorHook3 = (err) => console.log('errorHook3')
+
+        app.ec = errorHook1
+        btn1.ec = errorHook2
+        btn2.ec = errorHook3
+
+        const fn4 = () => {
+            return new Promise((resolve, reject) => {
+                setTimeout(reject, 1000)
+            })
+        }
+        function createInvoker(newHandler) {
+            const fn = (event) => {
+                return fn.value(event)
+            }
+            fn.value = newHandler
+            return fn
+        }
+        function patchEvent(target, key, oldHandler, newHandler) {
+            // vei = vue event invoker {onClick:fn1}
+            const invokers = target.vei || (target.vei = {})
+            const event = invokers[key]
+            if (event && newHandler) {
+                // 更新
+                event.value = newHandler
+            } else {
+                //
+                if (!event) {
+                    // 新增
+                    const handler = invokers[key] = createInvoker(newHandler)
+                    target.addEventListener(key.slice(2).toLowerCase(), () => handlerError(target, handler))
+                } else if (!newHandler) {
+                    // 卸载
+                    target.removeEventListener(key.slice(2).toLowerCase(), event)
+                    invokers[key] = undefined
+                }
+            }
+        }
+
+        const handlerError = (el, fn) => {
+            const res = fn()
+            console.log('res', res)
+            if (res && res.catch) {
+                res.catch(error => {
+                    trace(el, error)
+                })
+            }
+            return res
+        }
+
+        function trace(el, error) {
+            let cur = el.parentElement;
+            while (cur) {
+                const errorHooks = cur.ec
+                if (errorHooks) {
+                    const isStop = errorHooks(error)
+                    if (isStop === false) {
+                        return
+                    }
+                }
+                cur = cur.parentElement
+            }
+            const globalErrorHandler = document.body.errorHandler
+            globalErrorHandler && globalErrorHandler(error)
+        }
+
+
+        patchEvent(btn3, 'onClick', null, fn4)
+    </script>
+</body>
+
+</html>
