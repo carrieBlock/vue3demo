@@ -9,10 +9,10 @@ export const patchEvent = (el, key, oldHandler, newHandler) => {
         if (newHandler) {
             // add
             const invoker = (invokers[key] = createInvoker(newHandler));
-            el.addEventListener(key.slice(2).toLowercase(), invoker);
+            el.addEventListener(key.slice(2).toLowerCase(), invoker);
         } else if (oldHandler) {
             // remove
-            el.removeEventListener(key.slice(2).toLowercase(), exitstingInvoker);
+            el.removeEventListener(key.slice(2).toLowerCase(), exitstingInvoker);
             invokers[key] = undefined;
         }
     }

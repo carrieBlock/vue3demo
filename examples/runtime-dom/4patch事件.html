@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">123123123123</div>
+    <script src="../../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+    <script>
+        const { rendererOptions } = VueRuntimeDOM
+        console.log(rendererOptions, 'rendererOptions')
+        const patchEvent = rendererOptions.patchEvent
+        // 测试绑定事件
+        const fn1 = () => {
+            console.log('fn1')
+        }
+        const fn2 = () => {
+            console.log('fn2')
+        }
+        patchEvent(app, 'onClick', null, fn2)
+
+
+        // 测试更新事件函数
+        setTimeout(() => {
+            patchEvent(app, 'onClick', fn2, fn1)
+        }, 2000)
+
+        // 测试移除事件函数
+        setTimeout(() => {
+            patchEvent(app, 'onClick', null, null)
+        }, 4000)
+    </script>
+</body>
+
+</html>

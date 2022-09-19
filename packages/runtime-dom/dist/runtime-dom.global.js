@@ -121,9 +121,9 @@ var VueRuntimeDOM = (() => {
     } else {
       if (newHandler) {
         const invoker = invokers[key] = createInvoker(newHandler);
-        el.addEventListener(key.slice(2).toLowercase(), invoker);
+        el.addEventListener(key.slice(2).toLowerCase(), invoker);
       } else if (oldHandler) {
-        el.removeEventListener(key.slice(2).toLowercase(), exitstingInvoker);
+        el.removeEventListener(key.slice(2).toLowerCase(), exitstingInvoker);
         invokers[key] = void 0;
       }
     }
