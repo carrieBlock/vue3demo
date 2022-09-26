@@ -18,3 +18,13 @@ export const createVNode = (type, props, children) => {
 }
 
 export const isVnode = (val) => val && val.__v_isVnode
+
+export const isSameVNodeType = (v1, v2) => {
+    return v1.type === v2.type && v1.key === v2.key;
+};
+
+export const normalizeVNode = (v) => {
+    return createVNode(Text, null, v);
+};
+
+export const Text = Symbol("text");
