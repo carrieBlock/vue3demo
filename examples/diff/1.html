@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+    <script src="../../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+    <script>
+        const { render, h } = VueRuntimeDOM
+        // 1. 卸载
+        // render(h('div', 'helloworld'), app)
+        // setTimeout(() => {
+        //     render(null, app)
+        // }, 2000)
+
+
+        // 新旧都是文本
+        // render(h('div', 'helloworld'), app)
+        // setTimeout(() => {
+        //     render(h('div', 'helloworld11'), app)
+        // }, 2000)
+
+        // 新文本 旧数组 非虚拟dom 没有el属性
+        // render(h('div', ['ccc','ddd']), app)
+        // setTimeout(() => {
+        //     render(h('div', 'helloworld11'), app)
+        // }, 2000)
+
+        // 旧数组 新空
+        // render(h('div', ['ccc','ddd']), app)
+        // setTimeout(() => {
+        //     render(h('div', ''), app)
+        // }, 2000)
+
+
+        // 旧文本 新空
+        // render(h('div', '1321'), app)
+        // setTimeout(() => {
+        //     render(h('div', ''), app)
+        // }, 2000)
+    </script>
+</body>
+
+</html>

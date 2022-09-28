@@ -5,7 +5,7 @@ export const nodeOps = {
     remove(element) {
         const parentNode = element.parentNode;
         if (parentNode) {
-            parentNode.removChild(element)
+            parentNode.removeChild(element)
         }
     },
     createElement(type) {
