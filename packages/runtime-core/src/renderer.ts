@@ -127,8 +127,10 @@ export function createRenderer(options) {
             // i = 2,e1 = 4,e2 = 4, while2
             let s1 = i;
             let s2 = i;
+            let j;
             const toBePatched = e2 - s2 + 1
             const keyToNewIndexMap = new Map()
+            const newIndexToOldIndexMap = Array(toBePatched).fill(0) // [0,0,0] 创建需要变化的长度的数组 [0,0,0,0]
             // 把旧的节点map存储key
             for (let i = s2; i < e2; i++) {
                 keyToNewIndexMap.set(c2[i].key, i);
@@ -140,9 +142,14 @@ export function createRenderer(options) {
                     // 如果新的节点有 但是旧的节点没有
                     unmount(prevChild)
                 } else {
+                    newIndexToOldIndexMap[index - s2] = i + 1  // ?
                     patch(prevChild, c2[index], container);
                 }
             }
+
+            const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap) // [0,1] 不需要移动的那一项节点的索引
+
+            j = increasingNewIndexSequence.length - 1 // 1
 
             for (let i = toBePatched - 1; i >= 0; i--) {
                 const index = s2 + i; //后一项 要操作的部分末尾项
@@ -151,7 +158,12 @@ export function createRenderer(options) {
                 if (!nextChild.el) {
                     patch(null, nextChild, container, anchor);
                 } else {
-                    hostInsert(nextChild.el, container, anchor);
+                    // hostInsert(nextChild.el, container, anchor);
+                    if (i !== increasingNewIndexSequence[j]) {
+                        hostInsert(nextChild.el, container, anchor);
+                    } else {
+                        j--
+                    }
                 }
             }
 
@@ -283,3 +295,49 @@ export function createRenderer(options) {
         render
     }
 }
+
+
+function getSequence(arr) {
+    let p = arr.slice()
+    let len = arr.length;
+    let start, end, mid; // 二分
+    let result = [0] // 查找的第一项的索引
+    for (let i = 0; i < len; i++) {
+        const arrI = arr[i]  //当前项
+        const j = result[result.length - 1] // 最后一项
+        if (arrI !== 0) {
+            if (arr[j] < arrI) {
+                // 最后一项小于当前项
+                p[i] = j;
+                result.push(i);
+                continue;
+            }
+            start = 0;
+            end = result.length - 1
+            while (start < end) {
+                mid = (start + end) >> 1 // 等同于两数之和向下取整
+                if (arr[result[mid]] < arrI) {
+                    start = mid + 1
+                } else {
+                    end = mid
+                }
+            }
+
+            if (arrI < arr[result[start]]) {
+                if (start > 0) {
+                    p[i] = result[start - 1]
+                }
+                result[start] = i
+            }
+        }
+    }
+    let i = result.length;
+    let lastIndex = result[i - 1];
+    while (i-- > 0) {
+        result[i] = lastIndex;
+        lastIndex = p[lastIndex];
+    }
+    return result;
+}
+
+console.log(getSequence([7, 3, 6, 4, 9, 3, 8, 2]))

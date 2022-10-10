@@ -1,6 +1,6 @@
 export const nodeOps = {
     insert(element, container, anchor) {
-        container.insertBefore(element, anchor ?? null)
+        container.insertBefore(element, anchor)
     },
     remove(element) {
         const parentNode = element.parentNode;
