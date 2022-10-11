@@ -85,7 +85,8 @@ export function createRenderer(options) {
         // i = 0,e1 = -1,e2 = 0
         while (i <= e1 && i <= e2) {
             const n1 = c1[e1]
-            const n2 = c2[e2]
+            const n2 = normalizeVNode(c2[e2]) // 需要包装 
+            // const n2 = c2[e2]
             if (isSameVNodeType(n1, n2)) {
                 // 是同一个节点就更新
                 patch(n1, n2, container)
@@ -229,6 +230,7 @@ export function createRenderer(options) {
         }
     };
     const patchElement = (n1, n2, container) => {
+        debugger
         const el = (n2.el = n1.el);
         const oldProps = n1.props || {};
         const newProps = n2.props || {};

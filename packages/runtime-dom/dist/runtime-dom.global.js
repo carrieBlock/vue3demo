@@ -259,7 +259,7 @@ var VueRuntimeDOM = (() => {
       }
       while (i <= e1 && i <= e2) {
         const n1 = c1[e1];
-        const n2 = c2[e2];
+        const n2 = normalizeVNode(c2[e2]);
         if (isSameVNodeType(n1, n2)) {
           patch(n1, n2, container);
         } else {
@@ -349,6 +349,7 @@ var VueRuntimeDOM = (() => {
       }
     };
     const patchElement = (n1, n2, container) => {
+      debugger;
       const el = n2.el = n1.el;
       const oldProps = n1.props || {};
       const newProps = n2.props || {};
