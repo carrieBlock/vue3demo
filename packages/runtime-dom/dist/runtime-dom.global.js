@@ -357,7 +357,7 @@ var VueRuntimeDOM = (() => {
       const oldProps = n1.props || {};
       const newProps = n2.props || {};
       patchProps(oldProps, newProps, el);
-      patchChildren(n1, n2, el);
+      patchChildren(n1, n2, el, container);
     };
     const processText = (n1, n2, container) => {
       if (n1 == null) {
