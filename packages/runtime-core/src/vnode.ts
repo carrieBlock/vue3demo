@@ -28,3 +28,5 @@ export const normalizeVNode = (v) => {
 };
 
 export const Text = Symbol("text");
+
+export const Fragment = Symbol('fragment')

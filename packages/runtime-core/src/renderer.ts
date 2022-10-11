@@ -1,4 +1,4 @@
-import { isSameVNodeType, normalizeVNode, Text } from "./vnode";
+import { isSameVNodeType, normalizeVNode, Text, Fragment } from "./vnode";
 import { patchProp } from "packages/runtime-dom/src/patchProp";
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
 export function createRenderer(options) {
@@ -96,7 +96,6 @@ export function createRenderer(options) {
             e1--;
             e2--;
         }
-        console.log(i, e1, e2)
         if (i > e1) {
             if (i <= e2) {
                 while (i <= e2) {
@@ -170,7 +169,7 @@ export function createRenderer(options) {
 
         }
     }
-    const patchChildren = (n1, n2, el) => {
+    const patchChildren = (n1, n2, el, container) => {
         const c1 = n1 && n1.children;
         const c2 = n2 && n2.children;
         const prevShapeFlag = n1.shapeFlag;
@@ -230,7 +229,6 @@ export function createRenderer(options) {
         }
     };
     const patchElement = (n1, n2, container) => {
-        debugger
         const el = (n2.el = n1.el);
         const oldProps = n1.props || {};
         const newProps = n2.props || {};
@@ -249,6 +247,17 @@ export function createRenderer(options) {
             hostSetElementText(el, n2.children)
         }
     }
+    const processFragment = (n1, n2, container, anchor) => {
+        console.log(n1, n2)
+        if (n1 == null) {
+            // 创建节点
+            mountChildren(n2.children, container);
+        } else {
+            // 更新节点
+            const el = n2.el = n1.el
+            patchChildren(n1, n2, el, container)
+        }
+    }
     const processElement = (n1, n2, container, anchor) => {
         if (n1 == null) {
             // 创建节点
@@ -265,10 +274,12 @@ export function createRenderer(options) {
         }
 
         const { type, shapeFlag } = n2;
-
         switch (type) {
             case Text:
                 processText(n1, n2, container);
+                break;
+            case Fragment:
+                processFragment(n1, n2, container, anchor)
                 break;
             default:
                 if (shapeFlag & ShapeFlags.ELEMENT) {
@@ -279,7 +290,12 @@ export function createRenderer(options) {
     };
 
     const unmount = (vnode) => {
-        hostRemove(vnode.el)
+        const { el, type } = vnode
+        if (type === Fragment) {
+            unmountChildren(vnode.children)
+        } else {
+            hostRemove(el)
+        }
     }
     const render = (vnode, container) => {
         if (vnode == null) {
@@ -341,5 +357,3 @@ function getSequence(arr) {
     }
     return result;
 }
-
-console.log(getSequence([7, 3, 6, 4, 9, 3, 8, 2]))

@@ -37,12 +37,16 @@ var VueRuntimeDOM = (() => {
   // packages/runtime-dom/src/index.ts
   var src_exports = {};
   __export(src_exports, {
+    Fragment: () => Fragment,
+    Text: () => Text,
     computed: () => computed,
     createVNode: () => createVNode,
     customRef: () => customRef,
     effect: () => effect,
     h: () => h,
     isRef: () => isRef,
+    isSameVNodeType: () => isSameVNodeType,
+    isVnode: () => isVnode,
     reactive: () => reactive,
     ref: () => ref,
     render: () => render,
@@ -192,6 +196,7 @@ var VueRuntimeDOM = (() => {
     return createVNode(Text, null, v);
   };
   var Text = Symbol("text");
+  var Fragment = Symbol("fragment");
 
   // packages/runtime-core/src/renderer.ts
   function createRenderer(options) {
@@ -268,7 +273,6 @@ var VueRuntimeDOM = (() => {
         e1--;
         e2--;
       }
-      console.log(i, e1, e2);
       if (i > e1) {
         if (i <= e2) {
           while (i <= e2) {
@@ -319,7 +323,7 @@ var VueRuntimeDOM = (() => {
         }
       }
     };
-    const patchChildren = (n1, n2, el) => {
+    const patchChildren = (n1, n2, el, container) => {
       const c1 = n1 && n1.children;
       const c2 = n2 && n2.children;
       const prevShapeFlag = n1.shapeFlag;
@@ -349,7 +353,6 @@ var VueRuntimeDOM = (() => {
       }
     };
     const patchElement = (n1, n2, container) => {
-      debugger;
       const el = n2.el = n1.el;
       const oldProps = n1.props || {};
       const newProps = n2.props || {};
@@ -364,6 +367,15 @@ var VueRuntimeDOM = (() => {
       } else {
         const el = n2.el = n1.el;
         hostSetElementText(el, n2.children);
+      }
+    };
+    const processFragment = (n1, n2, container, anchor) => {
+      console.log(n1, n2);
+      if (n1 == null) {
+        mountChildren(n2.children, container);
+      } else {
+        const el = n2.el = n1.el;
+        patchChildren(n1, n2, el, container);
       }
     };
     const processElement = (n1, n2, container, anchor) => {
@@ -383,6 +395,9 @@ var VueRuntimeDOM = (() => {
         case Text:
           processText(n1, n2, container);
           break;
+        case Fragment:
+          processFragment(n1, n2, container, anchor);
+          break;
         default:
           if (shapeFlag & 1 /* ELEMENT */) {
             processElement(n1, n2, container, anchor);
@@ -391,7 +406,12 @@ var VueRuntimeDOM = (() => {
       }
     };
     const unmount = (vnode) => {
-      hostRemove(vnode.el);
+      const { el, type } = vnode;
+      if (type === Fragment) {
+        unmountChildren(vnode.children);
+      } else {
+        hostRemove(el);
+      }
     };
     const render2 = (vnode, container) => {
       if (vnode == null) {
@@ -447,7 +467,6 @@ var VueRuntimeDOM = (() => {
     }
     return result;
   }
-  console.log(getSequence([7, 3, 6, 4, 9, 3, 8, 2]));
 
   // packages/reactivity/src/effect.ts
   var activeEffect;
@@ -780,7 +799,6 @@ var VueRuntimeDOM = (() => {
     const { render: _render } = createRenderer(rendererOptions);
     _render(vnode, container);
   };
-  console.log(rendererOptions, "rendererOptions");
   return __toCommonJS(src_exports);
 })();
 //# sourceMappingURL=runtime-dom.global.js.map

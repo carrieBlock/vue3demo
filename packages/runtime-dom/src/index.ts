@@ -19,5 +19,4 @@ export const render = (vnode, container) => {
   const { render: _render } = createRenderer(rendererOptions);
   _render(vnode, container);
 };
-console.log(rendererOptions, "rendererOptions");
 export * from "@vue/runtime-core";
