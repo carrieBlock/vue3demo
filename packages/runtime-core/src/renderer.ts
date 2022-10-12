@@ -1,6 +1,9 @@
 import { isSameVNodeType, normalizeVNode, Text, Fragment } from "./vnode";
 import { patchProp } from "packages/runtime-dom/src/patchProp";
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
+import { createComponentInstance, setupComponent } from "./component";
+import { reactive, ReactiveEffect } from "@vue/reactivity";
+
 export function createRenderer(options) {
     const {
         insert: hostInsert,
@@ -43,6 +46,37 @@ export function createRenderer(options) {
         }
         hostInsert(el, container, anchor);
     }
+    const mountComponent = (vnode, container, anchor) => {
+        // 创建组件实例
+        const instance = vnode.component = createComponentInstance(vnode)
+        console.log('instance', instance)
+        setupComponent(instance)
+        // 初始化props 和instance 访问 proxy 先访问data再访问props的数据
+        setupRenderEffect(instance, container, anchor)
+    }
+    const setupRenderEffect = (instance, container, anchor) => {
+        const { data, render } = instance.type
+        const state = instance.data = reactive(data())
+        // 响应式数据
+
+        const componentUpdateFn = () => {
+            if (!instance.isMounted) {
+                // 挂载
+                const subTree = instance.subTree = render.call(instance.proxy)
+                patch(null, subTree, container, anchor)
+                instance.isMounted = true
+            } else {
+                // 更新
+                const nextTree = render.call(instance.proxy)
+                const prevTree = instance.subTree
+                patch(prevTree, nextTree, container, anchor)
+                instance.subTree = nextTree
+            }
+        }
+        const effect = instance.effect = new ReactiveEffect(componentUpdateFn)
+        const update = instance.update = effect.run.bind(effect)
+        update()
+    }
     const patchProps = (oldProps, newProps, el) => {
         for (const key in newProps) {
             patchProp(el, key, oldProps[key], newProps[key]);
@@ -60,6 +94,7 @@ export function createRenderer(options) {
         }
     };
     const patchedKeyChildren = (c1, c2, container) => {
+        debugger
         let i = 0;
         let e1 = c1.length - 1
         let e2 = c2.length - 1
@@ -130,6 +165,10 @@ export function createRenderer(options) {
             let j;
             const toBePatched = e2 - s2 + 1
             const keyToNewIndexMap = new Map()
+            console.log(e2)
+            console.log(s2)
+            console.log(toBePatched)
+            console.log(Array(toBePatched))
             const newIndexToOldIndexMap = Array(toBePatched).fill(0) // [0,0,0] 创建需要变化的长度的数组 [0,0,0,0]
             // 把旧的节点map存储key
             for (let i = s2; i < e2; i++) {
@@ -233,7 +272,7 @@ export function createRenderer(options) {
         const oldProps = n1.props || {};
         const newProps = n2.props || {};
         patchProps(oldProps, newProps, el);
-        patchChildren(n1, n2, el,container);
+        patchChildren(n1, n2, el, container);
     }
     const processText = (n1, n2, container) => {
         if (n1 == null) {
@@ -267,6 +306,14 @@ export function createRenderer(options) {
             patchElement(n1, n2, container);
         }
     }
+    const processComponent = (n1, n2, container, anchor) => {
+        if (n1 == null) {
+            // 挂载component
+            mountComponent(n2, container, anchor)
+        } else {
+            // 更新component
+        }
+    }
     const patch = (n1, n2, container, anchor = null) => {
         if (n1 && !isSameVNodeType(n1, n2)) {
             unmount(n1);
@@ -284,8 +331,9 @@ export function createRenderer(options) {
             default:
                 if (shapeFlag & ShapeFlags.ELEMENT) {
                     processElement(n1, n2, container, anchor);
+                } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+                    processComponent(n1, n2, container, anchor)
                 }
-                break;
         }
     };
 

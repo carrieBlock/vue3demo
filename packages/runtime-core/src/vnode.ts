@@ -1,7 +1,7 @@
 
-import { isString, ShapeFlags } from "@vue/shared"
+import { isString, ShapeFlags, isObject, isNumber } from "@vue/shared"
 export const createVNode = (type, props, children) => {
-    const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
+    const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0;
     const vnode = {
         __v_isVnode: true,
         type,
@@ -12,7 +12,7 @@ export const createVNode = (type, props, children) => {
         shapeFlag, //标记孩子类型
     }
     if (children) {
-        vnode.shapeFlag |= isString(children) ? ShapeFlags.TEXT_CHILDREN : ShapeFlags.ARRAY_CHILDREN
+        vnode.shapeFlag |= isString(children) || isNumber(children) ? ShapeFlags.TEXT_CHILDREN : ShapeFlags.ARRAY_CHILDREN
     }
     return vnode
 }
@@ -24,7 +24,9 @@ export const isSameVNodeType = (v1, v2) => {
 };
 
 export const normalizeVNode = (v) => {
-    return createVNode(Text, null, v);
+    if (isString(v) || isNumber(v)) {
+        return createVNode(Text, null, String(v));
+    }
 };
 
 export const Text = Symbol("text");
