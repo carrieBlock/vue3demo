@@ -1,4 +1,5 @@
 import { reactive } from "@vue/reactivity"
+import { hasOwn } from "@vue/shared";
 
 export function initProps(allProps, instance) {
     // 初始化props和attr
@@ -19,3 +20,18 @@ export function initProps(allProps, instance) {
     instance.props = reactive(props)
     instance.attrs = attrs
 }
+
+
+export function updateProps(prevProps, nextProps) {
+    if (prevProps) {
+        for (let key in prevProps) {
+            if (hasOwn(nextProps, key)) {
+                console.log('prevProps',prevProps)
+                prevProps[key] = nextProps[key];
+            } else {
+                delete prevProps[key];
+            }
+        }
+    }
+}
+

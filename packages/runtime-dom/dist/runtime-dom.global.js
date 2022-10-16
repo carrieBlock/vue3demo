@@ -99,6 +99,8 @@ var VueRuntimeDOM = (() => {
   var isString = (val) => typeof val === "string";
   var isNumber = (val) => typeof val === "number";
   var isArray = Array.isArray;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var hasOwn = (obj, key) => isObject(obj) && hasOwnProperty.call(obj, key);
 
   // packages/runtime-dom/src/modules/attr.ts
   var patchAttr = (el, key, newValue) => {
@@ -513,6 +515,18 @@ var VueRuntimeDOM = (() => {
     instance.props = reactive(props);
     instance.attrs = attrs;
   }
+  function updateProps(prevProps, nextProps) {
+    if (prevProps) {
+      for (let key in prevProps) {
+        if (hasOwn(nextProps, key)) {
+          console.log("prevProps", prevProps);
+          prevProps[key] = nextProps[key];
+        } else {
+          delete prevProps[key];
+        }
+      }
+    }
+  }
 
   // packages/runtime-core/src/component.ts
   function createComponentInstance(vnode) {
@@ -610,15 +624,29 @@ var VueRuntimeDOM = (() => {
       setupComponent(instance);
       setupRenderEffect(instance, container, anchor);
     };
+    const componentUpdatePreRender = (instance, next) => {
+      const prevProps = instance.props;
+      const nextProps = next.props;
+      updateProps(prevProps, nextProps);
+      instance.next = null;
+      instance.vnode = next;
+    };
     const setupRenderEffect = (instance, container, anchor) => {
       const { data, render: render3 } = instance.type;
-      const state = instance.data = reactive(data());
+      let state;
+      if (data) {
+        state = instance.data = reactive(data());
+      }
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
           const subTree = instance.subTree = render3.call(instance.proxy);
           patch(null, subTree, container, anchor);
           instance.isMounted = true;
         } else {
+          const { next } = instance;
+          if (next) {
+            componentUpdatePreRender(instance, next);
+          }
           const nextTree = render3.call(instance.proxy);
           const prevTree = instance.subTree;
           patch(prevTree, nextTree, container, anchor);
@@ -645,7 +673,6 @@ var VueRuntimeDOM = (() => {
       }
     };
     const patchedKeyChildren = (c1, c2, container) => {
-      debugger;
       let i = 0;
       let e1 = c1.length - 1;
       let e2 = c2.length - 1;
@@ -790,7 +817,13 @@ var VueRuntimeDOM = (() => {
       if (n1 == null) {
         mountComponent(n2, container, anchor);
       } else {
+        updateComponent(n1, n2);
       }
+    };
+    const updateComponent = (n1, n2) => {
+      const instance = n2.component = n1.component;
+      instance.next = n2;
+      instance.update();
     };
     const patch = (n1, n2, container, anchor = null) => {
       if (n1 && !isSameVNodeType(n1, n2)) {

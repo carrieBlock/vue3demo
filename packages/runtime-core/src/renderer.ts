@@ -3,6 +3,7 @@ import { patchProp } from "packages/runtime-dom/src/patchProp";
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
 import { createComponentInstance, setupComponent } from "./component";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
+import { updateProps } from "./componentProps";
 
 export function createRenderer(options) {
     const {
@@ -54,9 +55,20 @@ export function createRenderer(options) {
         // 初始化props 和instance 访问 proxy 先访问data再访问props的数据
         setupRenderEffect(instance, container, anchor)
     }
+    const componentUpdatePreRender = (instance, next) => {
+        const prevProps = instance.props;
+        const nextProps = next.props;
+        updateProps(prevProps, nextProps);
+        instance.next = null;
+        instance.vnode = next;
+    };
     const setupRenderEffect = (instance, container, anchor) => {
         const { data, render } = instance.type
-        const state = instance.data = reactive(data())
+
+        let state;
+        if (data) {
+            state = instance.data = reactive(data());
+        }
         // 响应式数据
 
         const componentUpdateFn = () => {
@@ -66,6 +78,11 @@ export function createRenderer(options) {
                 patch(null, subTree, container, anchor)
                 instance.isMounted = true
             } else {
+                // debugger
+                const { next } = instance;
+                if (next) {
+                    componentUpdatePreRender(instance, next)
+                }
                 // 更新
                 const nextTree = render.call(instance.proxy)
                 const prevTree = instance.subTree
@@ -94,7 +111,6 @@ export function createRenderer(options) {
         }
     };
     const patchedKeyChildren = (c1, c2, container) => {
-        debugger
         let i = 0;
         let e1 = c1.length - 1
         let e2 = c2.length - 1
@@ -312,7 +328,14 @@ export function createRenderer(options) {
             mountComponent(n2, container, anchor)
         } else {
             // 更新component
+            updateComponent(n1, n2);
         }
+    }
+    const updateComponent = (n1, n2) => {
+        // 复用组件
+        const instance = (n2.component = n1.component);
+        instance.next = n2;
+        instance.update();
     }
     const patch = (n1, n2, container, anchor = null) => {
         if (n1 && !isSameVNodeType(n1, n2)) {

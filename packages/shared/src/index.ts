@@ -11,6 +11,10 @@ export const isNumber = (val) => typeof val === "number";
 
 export const isArray = Array.isArray;
 
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+export const hasOwn = (obj, key) =>
+  isObject(obj) && hasOwnProperty.call(obj, key);
+
 export const enum ShapeFlags {
   ELEMENT = 1 << 0, // 1
   FUNCTIONAL_COMPONENT = 1 << 1, // 2
