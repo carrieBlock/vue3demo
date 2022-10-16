@@ -13,3 +13,4 @@ export {
 
 export { createVNode, isVnode, isSameVNodeType, Text, Fragment } from "./vnode";
 export { h } from "./h";
+export { nextTick } from "./scheduler";

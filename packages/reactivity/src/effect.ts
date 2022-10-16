@@ -57,7 +57,6 @@ export function track(target, key) {
 }
 
 export function trackEffect(deps) {
-  console.log(activeEffect,'activeEffect')
   if (activeEffect) {
     deps.add(activeEffect);
     activeEffect.deps.push(deps);

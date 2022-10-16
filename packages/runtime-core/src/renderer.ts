@@ -54,7 +54,7 @@ export function createRenderer(options) {
         console.log('instance', instance)
         setupComponent(instance)
         // 初始化props 和instance 访问 proxy 先访问data再访问props的数据
-        setupRenderEffect(instance, container, anchor)
+        setupRenderEffect(instance, vnode, container, anchor)
     }
     const componentUpdatePreRender = (instance, next) => {
         const prevProps = instance.props;
@@ -63,14 +63,14 @@ export function createRenderer(options) {
         instance.next = null;
         instance.vnode = next;
     };
-    const setupRenderEffect = (instance, container, anchor) => {
+    const setupRenderEffect = (instance, vnode, container, anchor) => {
         const { data, render } = instance.type
 
         let state;
         if (data) {
             state = instance.data = reactive(data());
         }
-        // 响应式数据
+        // 响应式数据 
 
         const componentUpdateFn = () => {
             if (!instance.isMounted) {
@@ -78,6 +78,8 @@ export function createRenderer(options) {
                 const subTree = instance.subTree = render.call(instance.proxy)
                 patch(null, subTree, container, anchor)
                 instance.isMounted = true
+                instance.el = vnode.el
+                vnode.el = subTree.el
             } else {
                 // debugger
                 const { next } = instance;
@@ -89,6 +91,7 @@ export function createRenderer(options) {
                 const prevTree = instance.subTree
                 patch(prevTree, nextTree, container, anchor)
                 instance.subTree = nextTree
+                vnode.el = nextTree.el
             }
         }
         const effect = instance.effect = new ReactiveEffect(componentUpdateFn, {

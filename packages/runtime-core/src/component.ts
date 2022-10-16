@@ -1,4 +1,5 @@
 import { initProps } from "./componentProps"
+import { nextTick } from "./scheduler";
 
 export function createComponentInstance(vnode) {
     let uid = 0
@@ -23,7 +24,9 @@ export function createComponentInstance(vnode) {
 const publicPropertiesMap = {
     $attrs: i => i.attrs,
     $data: i => i.data,
-    $props: i => i.props
+    $props: i => i.props,
+    $el: i => i.vnode.el,
+    $nextTick: () => nextTick, 
 }
 
 const PublicComponentProxyHandlers = {
