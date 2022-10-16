@@ -67,6 +67,26 @@ export function customRef(factory) {
     return new CustomRefImpl(factory)
 }
 
+export function proxyRefs(objectWithRefs) {
+    return isReactive(objectWithRefs)
+        ? objectWithRefs
+        : new Proxy(objectWithRefs, {
+            get(target, key, receiver) {
+                return unRef(Reflect.get(target, key, receiver));
+            },
+            set(target, key, value, receiver) {
+                const oldValue = target[key]; // ref oldValue.value = value
+                if (isRef(oldValue) && !isRef(value)) {
+                    oldValue.value = value;
+                    return true;
+                } else {
+                    return Reflect.set(target, key, value, receiver);
+                }
+            },
+        });
+}
+
+
 class CustomRefImpl {
     public __v_isRef = true;
     public _deps;

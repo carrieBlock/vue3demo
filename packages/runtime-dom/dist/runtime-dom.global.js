@@ -479,6 +479,22 @@ var VueRuntimeDOM = (() => {
   function customRef(factory) {
     return new CustomRefImpl(factory);
   }
+  function proxyRefs(objectWithRefs) {
+    return isReactive(objectWithRefs) ? objectWithRefs : new Proxy(objectWithRefs, {
+      get(target, key, receiver) {
+        return unRef(Reflect.get(target, key, receiver));
+      },
+      set(target, key, value, receiver) {
+        const oldValue = target[key];
+        if (isRef(oldValue) && !isRef(value)) {
+          oldValue.value = value;
+          return true;
+        } else {
+          return Reflect.set(target, key, value, receiver);
+        }
+      }
+    });
+  }
   var CustomRefImpl = class {
     constructor(factory) {
       this.factory = factory;
@@ -560,6 +576,7 @@ var VueRuntimeDOM = (() => {
     let uid = 0;
     const instance = {
       uid: uid++,
+      setupState: {},
       data: {},
       props: {},
       attrs: {},
@@ -569,7 +586,8 @@ var VueRuntimeDOM = (() => {
       type: vnode.type,
       effect: null,
       update: null,
-      isMounted: false
+      isMounted: false,
+      setupContext: null
     };
     instance.ctx = { _: instance };
     console.log(instance);
@@ -610,7 +628,47 @@ var VueRuntimeDOM = (() => {
     const { props, children } = instance.vnode;
     initProps(props, instance);
     instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
+    const { setup, render: render2, template } = instance.type;
+    if (setup) {
+      const setupContext = instance.setupContext = createSetupContext(instance);
+      setCurrentInstance(instance);
+      const setupResult = setup(instance.props, setupContext);
+      setCurrentInstance(null);
+      if (isFunction(setup)) {
+        instance.render = setup(instance.props, setupContext);
+      } else {
+        instance.setupState = proxyRefs(setupResult);
+      }
+    }
+    if (!instance.render) {
+      if (isFunction(render2)) {
+        instance.render = render2;
+      } else {
+        if (template) {
+        }
+      }
+    }
+    if (!instance.render) {
+      instance.render = () => {
+      };
+    }
   }
+  function createSetupContext(instance) {
+    return {
+      attrs: instance.attrs,
+      slots: instance.slots,
+      emit: function emit(eventName, ...args) {
+        const props = instance.vnode.props;
+        const handlerName = `on${eventName[0].toUpperCase()}${eventName.slice(
+          1
+        )}`;
+        const handler = props[handlerName];
+        handler && handler(...args);
+      }
+    };
+  }
+  var currentInstance;
+  var setCurrentInstance = (i) => currentInstance = i;
 
   // packages/runtime-core/src/renderer.ts
   function createRenderer(options) {
@@ -661,7 +719,8 @@ var VueRuntimeDOM = (() => {
       instance.vnode = next;
     };
     const setupRenderEffect = (instance, vnode, container, anchor) => {
-      const { data, render: render3 } = instance.type;
+      const { data } = instance.type;
+      const { render: render3 } = instance;
       let state;
       if (data) {
         state = instance.data = reactive(data());
