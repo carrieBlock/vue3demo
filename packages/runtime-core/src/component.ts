@@ -1,5 +1,5 @@
 import { proxyRefs } from "@vue/reactivity";
-import { isFunction } from "@vue/shared";
+import { hasOwn, isFunction } from "@vue/shared";
 import { initProps } from "./componentProps"
 import { nextTick } from "./scheduler";
 
@@ -35,11 +35,13 @@ const publicPropertiesMap = {
 
 const PublicComponentProxyHandlers = {
     get(instance, key) {
-        const { data, props } = instance
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-            return data[key]
-        } else if (Object.prototype.hasOwnProperty.call(props, key)) {
-            return props[key]
+        const { data, props, setupState } = instance;
+        if (hasOwn(setupState, key)) {
+            return setupState[key];
+        } else if (data && hasOwn(data, key)) {
+            return data[key];
+        } else if (props && hasOwn(props, key)) {
+            return props[key];
         }
         // 先读data再读props
         const publicGetter = publicPropertiesMap[key]
@@ -48,13 +50,15 @@ const PublicComponentProxyHandlers = {
         }
     },
     set(instance, key, value) {
-        const { data, props } = instance
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-            data[key] = value
-            return true
-        } else if (Object.prototype.hasOwnProperty.call(props, key)) {
-            console.warn('props is readonly')
-            return false
+        const { data, props, setupState } = instance;
+        if (hasOwn(setupState, key)) {
+            setupState[key] = value; //
+        } else if (data && hasOwn(data, key)) {
+            data[key] = value;
+            return true;
+        } else if (props && hasOwn(props, key)) {
+            console.warn("props is readonly");
+            return false;
         }
     }
 }

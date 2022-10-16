@@ -602,10 +602,12 @@ var VueRuntimeDOM = (() => {
   };
   var PublicComponentProxyHandlers = {
     get(instance, key) {
-      const { data, props } = instance;
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
+      const { data, props, setupState } = instance;
+      if (hasOwn(setupState, key)) {
+        return setupState[key];
+      } else if (data && hasOwn(data, key)) {
         return data[key];
-      } else if (Object.prototype.hasOwnProperty.call(props, key)) {
+      } else if (props && hasOwn(props, key)) {
         return props[key];
       }
       const publicGetter = publicPropertiesMap[key];
@@ -614,11 +616,13 @@ var VueRuntimeDOM = (() => {
       }
     },
     set(instance, key, value) {
-      const { data, props } = instance;
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
+      const { data, props, setupState } = instance;
+      if (hasOwn(setupState, key)) {
+        setupState[key] = value;
+      } else if (data && hasOwn(data, key)) {
         data[key] = value;
         return true;
-      } else if (Object.prototype.hasOwnProperty.call(props, key)) {
+      } else if (props && hasOwn(props, key)) {
         console.warn("props is readonly");
         return false;
       }
@@ -707,7 +711,6 @@ var VueRuntimeDOM = (() => {
     };
     const mountComponent = (vnode, container, anchor) => {
       const instance = vnode.component = createComponentInstance(vnode);
-      console.log("instance", instance);
       setupComponent(instance);
       setupRenderEffect(instance, vnode, container, anchor);
     };

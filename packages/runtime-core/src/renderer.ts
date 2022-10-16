@@ -51,7 +51,6 @@ export function createRenderer(options) {
     const mountComponent = (vnode, container, anchor) => {
         // 创建组件实例
         const instance = vnode.component = createComponentInstance(vnode)
-        console.log('instance', instance)
         setupComponent(instance)
         // 初始化props 和instance 访问 proxy 先访问data再访问props的数据
         setupRenderEffect(instance, vnode, container, anchor)
@@ -75,7 +74,7 @@ export function createRenderer(options) {
         const componentUpdateFn = () => {
             if (!instance.isMounted) {
                 // 挂载
-                const subTree = instance.subTree = render.call(instance.proxy)
+                const subTree = (instance.subTree = render.call(instance.proxy));
                 patch(null, subTree, container, anchor)
                 instance.isMounted = true
                 instance.el = vnode.el
