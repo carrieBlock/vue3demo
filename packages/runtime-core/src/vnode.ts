@@ -1,5 +1,5 @@
 
-import { isString, ShapeFlags, isObject, isNumber } from "@vue/shared"
+import { isString, ShapeFlags, isObject, isNumber, isArray } from "@vue/shared"
 export const createVNode = (type, props, children) => {
     const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0;
     const vnode = {
@@ -12,7 +12,16 @@ export const createVNode = (type, props, children) => {
         shapeFlag, //标记孩子类型
     }
     if (children) {
-        vnode.shapeFlag |= isString(children) || isNumber(children) ? ShapeFlags.TEXT_CHILDREN : ShapeFlags.ARRAY_CHILDREN
+        let type;
+        if (isArray(children)) {
+            type = ShapeFlags.ARRAY_CHILDREN;
+        } else if (isObject(children)) {
+            type = ShapeFlags.SLOTS_CHILDREN;
+        } else {
+            type = ShapeFlags.TEXT_CHILDREN;
+            children = String(children);
+        }
+        vnode.shapeFlag |= type;
     }
     return vnode
 }

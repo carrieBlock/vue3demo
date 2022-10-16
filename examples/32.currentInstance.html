@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+    <script src="../../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+    <script>
+        const { render, h, Fragment, ref, unref, getCurrentInstance, useAttrs, useSlots } = VueRuntimeDOM
+
+        const subComponent = {
+            setup(props) {
+                const attrs = useAttrs()
+                const slots = useSlots()
+                console.log(attrs, slots)
+                return () => {
+                    return h('h1', '123')
+                }
+            }
+        }
+
+        const component = {
+            setup(props) {
+                return () => {
+                    return h(subComponent, { a: 1, b: 2 }, { header: () => h('div', 'header') })
+                }
+            }
+        }
+
+        render(h(component), app)
+
+    </script>
+</body>
+
+</html>

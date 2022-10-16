@@ -43,6 +43,8 @@ var VueRuntimeDOM = (() => {
     createVNode: () => createVNode,
     customRef: () => customRef,
     effect: () => effect,
+    getContext: () => getContext,
+    getCurrentInstance: () => getCurrentInstance,
     h: () => h,
     isRef: () => isRef,
     isSameVNodeType: () => isSameVNodeType,
@@ -55,6 +57,8 @@ var VueRuntimeDOM = (() => {
     toRef: () => toRef,
     toRefs: () => toRefs,
     unRef: () => unRef,
+    useAttrs: () => useAttrs,
+    useSlots: () => useSlots,
     watch: () => watch
   });
 
@@ -187,7 +191,16 @@ var VueRuntimeDOM = (() => {
       shapeFlag
     };
     if (children) {
-      vnode.shapeFlag |= isString(children) || isNumber(children) ? 8 /* TEXT_CHILDREN */ : 16 /* ARRAY_CHILDREN */;
+      let type2;
+      if (isArray(children)) {
+        type2 = 16 /* ARRAY_CHILDREN */;
+      } else if (isObject(children)) {
+        type2 = 32 /* SLOTS_CHILDREN */;
+      } else {
+        type2 = 8 /* TEXT_CHILDREN */;
+        children = String(children);
+      }
+      vnode.shapeFlag |= type2;
     }
     return vnode;
   };
@@ -521,7 +534,7 @@ var VueRuntimeDOM = (() => {
     if (allProps) {
       for (const key in allProps) {
         const value = allProps[key];
-        if (Object.prototype.hasOwnProperty.call(instance.type.props, key)) {
+        if (hasOwn(instance.type.props, key)) {
           props[key] = value;
         } else {
           attrs[key] = value;
@@ -541,6 +554,13 @@ var VueRuntimeDOM = (() => {
           delete prevProps[key];
         }
       }
+    }
+  }
+
+  // packages/runtime-core/src/componentSlots.ts
+  function initSlots(slots, instance) {
+    if (instance.vnode.shapeFlag & 32 /* SLOTS_CHILDREN */) {
+      instance.slots = slots;
     }
   }
 
@@ -580,6 +600,7 @@ var VueRuntimeDOM = (() => {
       data: {},
       props: {},
       attrs: {},
+      slots: {},
       ctx: null,
       subTree: null,
       vnode,
@@ -587,10 +608,13 @@ var VueRuntimeDOM = (() => {
       effect: null,
       update: null,
       isMounted: false,
-      setupContext: null
+      setupContext: null,
+      bm: null,
+      m: null,
+      bu: null,
+      u: null
     };
     instance.ctx = { _: instance };
-    console.log(instance);
     return instance;
   }
   var publicPropertiesMap = {
@@ -598,12 +622,13 @@ var VueRuntimeDOM = (() => {
     $data: (i) => i.data,
     $props: (i) => i.props,
     $el: (i) => i.vnode.el,
-    $nextTick: () => nextTick
+    $nextTick: () => nextTick,
+    $slots: (i) => i.slots
   };
   var PublicComponentProxyHandlers = {
     get(instance, key) {
       const { data, props, setupState } = instance;
-      if (hasOwn(setupState, key)) {
+      if (setupState && hasOwn(setupState, key)) {
         return setupState[key];
       } else if (data && hasOwn(data, key)) {
         return data[key];
@@ -617,7 +642,7 @@ var VueRuntimeDOM = (() => {
     },
     set(instance, key, value) {
       const { data, props, setupState } = instance;
-      if (hasOwn(setupState, key)) {
+      if (setupState && hasOwn(setupState, key)) {
         setupState[key] = value;
       } else if (data && hasOwn(data, key)) {
         data[key] = value;
@@ -631,10 +656,12 @@ var VueRuntimeDOM = (() => {
   function setupComponent(instance) {
     const { props, children } = instance.vnode;
     initProps(props, instance);
+    initSlots(children, instance);
     instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
     const { setup, render: render2, template } = instance.type;
     if (setup) {
       const setupContext = instance.setupContext = createSetupContext(instance);
+      console.log("setupContext", setupContext);
       setCurrentInstance(instance);
       const setupResult = setup(instance.props, setupContext);
       setCurrentInstance(null);
@@ -672,6 +699,7 @@ var VueRuntimeDOM = (() => {
     };
   }
   var currentInstance;
+  var getCurrentInstance = () => currentInstance;
   var setCurrentInstance = (i) => currentInstance = i;
 
   // packages/runtime-core/src/renderer.ts
@@ -1027,6 +1055,18 @@ var VueRuntimeDOM = (() => {
       }
       return createVNode(type, propsOrChildren, children);
     }
+  }
+
+  // packages/runtime-core/src/apiSetupHeplpers.ts
+  var useSlots = () => {
+    return getContext().slots;
+  };
+  var useAttrs = () => {
+    return getContext().attrs;
+  };
+  function getContext() {
+    const i = getCurrentInstance();
+    return i.setupContext;
   }
 
   // packages/runtime-dom/src/index.ts
